@@ -23,8 +23,17 @@ export default async function Image() {
           {world.totalCities} LARGEST CITIES · ROBINHOOD CHAIN
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 92, color: "#e8eef7", letterSpacing: 2 }}>
-            BUY INTO A CITY
+          {/*
+            Broken by hand, on the same line as the page itself. Left to
+            wrap, it orphans EARN on a line of its own and hangs AND off the
+            end of the first — and an OG card is read at thumbnail size,
+            where a bad break is the only thing anyone notices.
+          */}
+          <div style={{ display: "flex", fontSize: 88, color: "#ff7a18", letterSpacing: 2 }}>
+            BUY YOUR CITY
+          </div>
+          <div style={{ display: "flex", fontSize: 88, color: "#e8eef7", letterSpacing: 2 }}>
+            AND EARN
           </div>
           <div style={{ display: "flex", marginTop: 28, alignItems: "center", gap: 16 }}>
             <div style={{ display: "flex", width: 40, height: 40, background: "#ff7a18" }} />

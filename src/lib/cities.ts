@@ -105,6 +105,63 @@ export const graticule: Float64Array[] = (() => {
   return lines;
 })();
 
+// ---- search -------------------------------------------------------------
+
+/**
+ * Accent-blind, case-blind form of a string.
+ *
+ * Nobody types the diacritics. Someone looking for São Paulo types "sao
+ * paulo", someone looking for Malmö types "malmo", and a search that makes
+ * them get it right is a search that tells most of the world its cities are
+ * missing. NFD splits a letter from its accent and the range strips the
+ * accents, which handles every latinised name in the set.
+ */
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+const index = cities.map((city) => ({
+  city,
+  name: fold(city.name),
+  country: fold(city.country),
+}));
+
+/**
+ * Cities matching a query, best first.
+ *
+ * The tiers are the ranking, and within a tier the bigger city wins — which
+ * is what `id` already means. So "san" puts San Antonio above San Bernardino
+ * without any scoring, and typing a country name lists that country's cities
+ * largest first, which is a useful thing to be able to do by accident.
+ */
+export function searchCities(query: string, limit = 7): City[] {
+  const q = fold(query);
+  if (q.length === 0) return [];
+
+  const tiers: City[][] = [[], [], [], []];
+  for (const entry of index) {
+    let tier = -1;
+    if (entry.name.startsWith(q)) tier = 0;
+    else if (entry.name.includes(q)) tier = 1;
+    else if (entry.country.startsWith(q)) tier = 2;
+    else if (entry.country.includes(q)) tier = 3;
+    if (tier >= 0) tiers[tier].push(entry.city);
+  }
+
+  const out: City[] = [];
+  for (const tier of tiers) {
+    for (const city of tier) {
+      if (out.length >= limit) return out;
+      out.push(city);
+    }
+  }
+  return out;
+}
+
 // ---- formatting ---------------------------------------------------------
 
 /** Population, short. 35,676,000 reads as 35.7M. */

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
 import {
+  cityById,
   coastVectors,
   population,
   graticule,
@@ -84,8 +85,15 @@ function project(
   return { x: f.cx + x1 * f.radius, y: f.cy - y2 * f.radius, z: z2 };
 }
 
+/** Degrees to radians, for turning a city's coordinates into a rotation. */
+const DEG = Math.PI / 180;
+
+/** How long the globe takes to swing to a searched city. */
+const FLIGHT_MS = 820;
+
 export function Globe({
   selectedId,
+  focus,
   onSelect,
   className,
   /**
@@ -98,6 +106,12 @@ export function Globe({
   biasY = 0.5,
 }: {
   selectedId: number | null;
+  /**
+   * A city to swing the sphere around to. The nonce is what makes it fire:
+   * searching the same city twice in a row should fly there twice, and an
+   * id alone cannot say that it was asked for again.
+   */
+  focus?: { id: number; nonce: number } | null;
   onSelect: (city: City | null) => void;
   className?: string;
   bias?: number;
@@ -122,6 +136,11 @@ export function Globe({
     hoveredRef.current = hovered;
     selectedRef.current = selectedId;
   }, [hovered, selectedId, marketFor, peakActivity]);
+
+  const focusRef = useRef<{ id: number; nonce: number } | null>(null);
+  useEffect(() => {
+    focusRef.current = focus ?? null;
+  }, [focus]);
 
   const biasRef = useRef(bias);
   const biasYRef = useRef(biasY);
@@ -173,6 +192,14 @@ export function Globe({
     let height = 0;
     let spin = reduceMotion ? 0 : 0.0016;
     let dragging = false;
+    let handledFocus = -1;
+    let flight: {
+      fromYaw: number;
+      fromPitch: number;
+      toYaw: number;
+      toPitch: number;
+      start: number;
+    } | null = null;
     let visible = true;
     let running = false;
     let lastX = 0;
@@ -248,6 +275,36 @@ export function Globe({
         sinPitch: Math.sin(pitch.current),
       };
       frameRef.current = f;
+
+      /*
+       * Take off, if a city has been asked for since the last frame.
+       *
+       * Bringing a point to face the viewer is exact rather than iterative:
+       * the projection yaws first and pitches second, so a city at
+       * (lon, lat) lands dead centre at yaw = -lon and pitch = lat. The
+       * target yaw is then shifted by whole turns to the revolution nearest
+       * where the globe already is, or a city a few degrees east could send
+       * it the long way round the planet.
+       */
+      const wanted = focusRef.current;
+      if (wanted && wanted.nonce !== handledFocus) {
+        handledFocus = wanted.nonce;
+        const city = cityById(wanted.id);
+        if (city) {
+          const turn = Math.PI * 2;
+          let toYaw = -city.lon * DEG;
+          toYaw += Math.round((yaw.current - toYaw) / turn) * turn;
+          flight = {
+            fromYaw: yaw.current,
+            fromPitch: pitch.current,
+            toYaw,
+            // Clamped to the same range dragging is, so the flight cannot
+            // put the sphere somewhere the pointer could never take it.
+            toPitch: Math.min(1.35, Math.max(-1.35, city.lat * DEG)),
+            start: performance.now(),
+          };
+        }
+      }
 
       ctx.clearRect(0, 0, width, height);
 
@@ -430,7 +487,20 @@ export function Globe({
       emphasise(hoveredRef.current?.id ?? null, "rgba(255, 255, 255, 0.65)", 1.2);
       emphasise(selectedRef.current, "#ff9e2c", 2);
 
-      yaw.current += spin;
+      if (flight) {
+        // Ease in and out: the sphere is heavy, and a linear swing across a
+        // hemisphere looks like a slide rather than a turn.
+        const elapsed = performance.now() - flight.start;
+        const t = reduceMotion ? 1 : Math.min(1, elapsed / FLIGHT_MS);
+        const eased =
+          t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        yaw.current = flight.fromYaw + (flight.toYaw - flight.fromYaw) * eased;
+        pitch.current =
+          flight.fromPitch + (flight.toPitch - flight.fromPitch) * eased;
+        if (t >= 1) flight = null;
+      } else {
+        yaw.current += spin;
+      }
       raf = window.requestAnimationFrame(render);
     };
 
@@ -452,6 +522,8 @@ export function Globe({
     const onPointerDown = (event: PointerEvent) => {
       dragging = true;
       spin = 0;
+      // A hand on the globe outranks a flight it did not ask for.
+      flight = null;
       lastX = event.clientX;
       lastY = event.clientY;
       canvas.setPointerCapture(event.pointerId);

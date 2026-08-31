@@ -62,6 +62,33 @@ choices:
 | North of the equator | 872 of 999 |
 | Largest : smallest | 71.4× |
 
+## Finding your own city
+
+A sphere with 999 dots on it is a lovely thing to look at and a hopeless thing
+to search, and almost everyone arriving wants exactly one city. `CitySearch`
+is the shortcut: type, arrow, enter — or `/` from anywhere on the page.
+
+Matching folds diacritics both ways, so "sao paulo" finds São Paulo and "malmo"
+finds Malmö. Results are tiered — name-prefix, name-substring, country-prefix,
+country-substring — and within a tier the larger city wins, which falls out of
+`id` already being the rank. Typing a country name therefore lists that
+country's cities largest first, which is a useful thing to be able to do by
+accident.
+
+**Picking a result flies the globe to it.** Selecting a city on the far side
+would show the user nothing at all, so `Globe` takes a `focus` prop and swings
+the sphere around. Bringing a point to face the viewer is exact rather than
+iterative: the projection yaws first and pitches second, so a city at
+(lon, lat) lands dead centre at `yaw = -lon` and `pitch = lat`. The target yaw
+is shifted by whole turns to the revolution nearest where the globe already is,
+or a city a few degrees east sends it the long way round the planet. A hand on
+the globe cancels the flight.
+
+`focus` carries a nonce as well as an id, because searching the same city twice
+should fly there twice and an id alone cannot say it was asked for again. It is
+deliberately separate from `selectedId`: clicking a dot you can already see
+should not yank the sphere out from under the cursor.
+
 **Two lights.** Blue-white (`#7fb4e8`) is a city with people and no market — the
 colour of the LED street lighting genuinely replacing sodium everywhere.
 Sodium orange (`#ff7a18`) is a market. Nothing else on the page may use the warm

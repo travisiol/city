@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CitySearch } from "@/components/CitySearch";
 import { Globe } from "@/components/Globe";
 import { InfoOverlay } from "@/components/InfoOverlay";
 import { CityPanel } from "@/components/CityPanel";
@@ -21,6 +22,15 @@ import { useWorld } from "@/lib/worldState";
  */
 export function World() {
   const [selected, setSelected] = useState<City | null>(null);
+  /*
+   * What the globe should swing to. Separate from `selected` on purpose:
+   * clicking a dot you can already see should not yank the sphere out from
+   * under your cursor, but arriving at a city any other way has to bring it
+   * into view or the selection is invisible. The counter is what lets the
+   * same city be asked for twice.
+   */
+  const [focus, setFocus] = useState<{ id: number; nonce: number } | null>(null);
+  const flights = useRef(0);
   const [infoOpen, setInfoOpen] = useState(false);
   const [wide, setWide] = useState(true);
   const { totals, marketFor } = useWorld();
@@ -45,10 +55,16 @@ export function World() {
    * button goes to one of those; otherwise it opens any city, which is
    * still the fastest way to show that the globe is clickable.
    */
+  const goTo = (city: City) => {
+    flights.current += 1;
+    setSelected(city);
+    setFocus({ id: city.id, nonce: flights.current });
+  };
+
   const openACity = () => {
     const opened = cities.filter((city) => marketFor(city.id).isLive);
     const pool = opened.length > 0 ? opened : cities;
-    setSelected(pool[Math.floor(Math.random() * pool.length)]);
+    goTo(pool[Math.floor(Math.random() * pool.length)]);
   };
 
   const bias = wide ? (selected ? 0.34 : 0.66) : 0.5;
@@ -74,11 +90,25 @@ export function World() {
       <div className="absolute inset-0">
         <Globe
           selectedId={selected?.id ?? null}
+          focus={focus}
           onSelect={setSelected}
           bias={bias}
           biasY={biasY}
           className="h-full w-full"
         />
+      </div>
+
+      {/*
+        Search sits above everything and stays put. It slides clear of the
+        city sheet on a wide screen and steps aside entirely on a narrow
+        one, where the sheet covers the whole width anyway.
+      */}
+      <div
+        className={`absolute top-4 z-40 w-[248px] transition-[right] duration-300 sm:w-[280px] ${
+          selected ? "hidden lg:block lg:right-[456px]" : "right-4"
+        }`}
+      >
+        <CitySearch onPick={goTo} />
       </div>
 
       {/* The pitch, until a city takes its place. */}
@@ -90,8 +120,8 @@ export function World() {
             <h1 className="type-hero wordmark-blade mt-4 text-chalk">
               City
             </h1>
-            <p className="type-display mt-4 text-signal">Buy into a city</p>
-            <p className="type-display text-chalk">before it lights up</p>
+            <p className="type-display mt-4 text-signal">Buy your city</p>
+            <p className="type-display text-chalk">and earn</p>
 
             <p className="type-body mt-5 max-w-[46ch] text-chalk-soft">
               The 999 largest cities on Earth, ranked by the people who live
