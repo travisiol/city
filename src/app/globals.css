@@ -1,0 +1,244 @@
+@import "tailwindcss";
+
+/*
+ * CITY — the world's 999 largest cities, ranked and claimable.
+ *
+ * The whole design is one photograph: Earth from orbit, after dark. Land
+ * and sea are the same blue-black, and the only thing you can see is where
+ * people are. That is the argument the two sister projects had to make in
+ * words — this one just shows it.
+ *
+ * Two lights, and the difference between them is the system.
+ *
+ *   COLD (#7fb4e8) is a city with no market. It is the blue-white of the
+ *   LED street lighting that is genuinely replacing sodium everywhere, and
+ *   it means: people live here, nothing trades here.
+ *
+ *   SODIUM (#ff7a18) is a market. It is the old orange lamp, and it is the
+ *   only warm thing on the page. Nothing else may use it — on a sphere of
+ *   999 points of light, warmth has to mean activity or it means nothing.
+ *
+ * The display face is condensed, because that is the language cities
+ * already speak: transit signage, street blades, departure boards. Not the
+ * heavy poster of a land grab and not the stencil of an instrument.
+ */
+:root {
+  --night: #04070d;
+  --deep: #0a111b;
+  --deep-raised: #121a26;
+  --deep-line: #1d2836;
+
+  --chalk: #e8eef7;
+  --chalk-soft: #9fb0c6;
+  --chalk-muted: #6d7d92;
+
+  --signal: #ff7a18;
+  --signal-bright: #ff9d55;
+  --signal-deep: #a84703;
+
+  /* The second light. Data, not decoration: anything the page says about a
+     city that has no market is allowed to be cold. */
+  --cold: #7fb4e8;
+  --cold-deep: #3d6f9f;
+
+  --rule: rgba(150, 185, 225, 0.14);
+  --rule-strong: rgba(150, 185, 225, 0.3);
+
+  --gain: #4ecf9a;
+  --loss: #e2604a;
+
+  /* Ownership segments. Sodium is always you; the blues are everyone else,
+     so the bar reads at a glance as "my slice against the rest". */
+  --holder-near: #35597f;
+  --holder-far: #5f89b5;
+}
+
+@theme inline {
+  --color-void: var(--night);
+  --color-field: var(--deep);
+  --color-field-raised: var(--deep-raised);
+  --color-field-line: var(--deep-line);
+  --color-chalk: var(--chalk);
+  --color-chalk-soft: var(--chalk-soft);
+  --color-chalk-muted: var(--chalk-muted);
+  --color-signal: var(--signal);
+  --color-signal-bright: var(--signal-bright);
+  --color-signal-deep: var(--signal-deep);
+  --color-cold: var(--cold);
+  --color-cold-deep: var(--cold-deep);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+  --color-holder-near: var(--holder-near);
+  --color-holder-far: var(--holder-far);
+
+  --font-display:
+    "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans:
+    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--night);
+}
+
+body {
+  background: var(--night);
+  color: var(--chalk);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--night);
+}
+
+/* ---- Type ------------------------------------------------------------- */
+
+/*
+ * Sized against its own column, not the viewport. The wordmark sits in a
+ * fixed rail on desktop and full width when the layout stacks, so a vw
+ * clamp gets it wrong in one of those two places every time.
+ */
+.pitch {
+  container-type: inline-size;
+}
+
+.type-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  /* Condensed carries a much larger size on the same column than a normal
+     width would, which is the entire reason signage uses it. */
+  font-size: clamp(56px, 26cqw, 168px);
+  line-height: 0.86;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+}
+
+/*
+ * The wordmark as a street blade: set tight, hung under a heavy rule, with
+ * the sodium lamp above it. No outline and no stroke — a sign is legible
+ * because of its weight, not because of its decoration.
+ */
+.wordmark-blade {
+  display: block;
+  border-bottom: 3px solid var(--signal);
+  padding-bottom: 0.04em;
+}
+
+.type-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(24px, 3vw, 40px);
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.type-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(17px, 1.9vw, 23px);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Numbers. Always mono, always tabular — this is a market surface. */
+.type-figure {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-figure-sm {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-label {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1.1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.type-data {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.type-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ---- Surface ---------------------------------------------------------- */
+
+/*
+ * A far scatter of light behind a panel — the view out of the window, not a
+ * texture. Kept faint enough that it never competes with the globe, which
+ * is the only place on the page allowed to be busy.
+ */
+.farlights {
+  background-image:
+    radial-gradient(rgba(127, 180, 232, 0.14) 1px, transparent 1px),
+    radial-gradient(rgba(127, 180, 232, 0.08) 1px, transparent 1px);
+  background-size:
+    37px 43px,
+    23px 19px;
+  background-position:
+    0 0,
+    11px 7px;
+}
+
+.panel {
+  background: var(--deep);
+  border: 1px solid var(--rule);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* Genesis ticker. Duplicated content scrolls one full copy, then loops. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 42s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-ticker {
+    animation: none;
+  }
+}
